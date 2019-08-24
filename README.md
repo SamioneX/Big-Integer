@@ -36,9 +36,9 @@ Note: If a primitive type is passed as parameter to the addition and subtraction
 
 6) BigInt operator* (const BigInt& b);
 
-7) BigInt& operator*= (long divisor);
+7) BigInt& operator*= (long  multiplier);
 
-8) BigInt operator* (long divisor);
+8) BigInt operator* (long  multiplier);
 
 The division operators throws a divisionByZero exception if the divisor is less than the dividend.
 
