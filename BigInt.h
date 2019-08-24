@@ -242,25 +242,26 @@ namespace my {
             BigInt result;
             result.isNeg = b.isNeg? !isNeg : isNeg;
             
-            if (this->inUse < 19 && b.inUse < 19)
-                result.move((long long)*this / (long long)b);
+            /*if (this->inUse < 19 && b.inUse < 19)
+                result.move((long long)*this / (long long)b);*/
             
             /* Strategy: Get a number E with as many digits from N as their are in D
             * (get one more digit if E is smaller than the divisor). Use repeated subtraction
             * to divide E by D and append the quotient to result. Let E be the remainder left
             * from division. Append as many elements in D to it. Repeat the division.
             */ 
-            else if (b.inUse <= inUse) {
+            if (b.inUse <= inUse) {
                 int m = b.inUse+1;
                 short int quotient[inUse-b.inUse+1];
-                int j = 0, pos = inUse, t_pos = m;
+                int j = 0, pos = inUse, t_pos = m, p = inUse-b.inUse;
                 short int temp[m];
 
                 //loop till number of elements left is fewer than number of elements
                 // we need to divide with.
                 while (pos != 0 && pos >= t_pos - 1) {
 
-                    //if we have b.inUse length of remainders, get one more digit
+                    //if we have b.inUse length of remainders, get one more digit since the remainder is
+                    //guaranteed to be less than b.
                     if (t_pos == 1)
                         temp[--t_pos] = arr[--pos];
                     //else get an extra t_pos-1 digits.
@@ -278,19 +279,29 @@ namespace my {
                         if (diff < 0) {
                             quotient[j++] = 0;
                             if (pos == 0) break;
+                            //get an extra digit since temp is less than b.
                             temp[--t_pos] = arr[--pos];
                         }
                         
                         short int* t = temp+t_pos; //used to offset the array for when t_pos == 1 || 0
                         int q = 0, i = m-t_pos;
+                        
+                        //Perform division by repeated subtraction
                         while (i > b.inUse || (i == b.inUse && t[i-1] > b.arr[i-1])) {
                             i = doSubtract(t, i, b.arr, b.inUse, t);
                             ++q;
                         }
-                        if (i == b.inUse && compare_help(t, i, b.arr, i) >= 0)
-                            ++q;
+                        if (i == b.inUse) {
+                            int n = compare_help(t, i, b.arr, i);
+                            if (n > 0) {
+                                i = doSubtract(t, i, b.arr, b.inUse, t);
+                                ++q;
+                            }
+                            else if (n == 0) {
+                                i = 0; ++q;
+                            }
+                        }
                         quotient[j++] = q;
-                        
                         //update t_pos and shift the remainder to the end of the array if there's any
                         if (i == 0) t_pos = m;
                         else if (i == m-t_pos) t_pos = 1;
@@ -303,11 +314,13 @@ namespace my {
                 }
                 if (j == 1) result.arr[0] = quotient[0];
                 else {
-                    result.allocated = j;
-                    result.inUse = j;
+                    int start = 0;
+                    if (quotient[0] == 0) ++start;
+                    result.allocated = j - start;
+                    result.inUse = result.allocated;
                     delete [] result.arr;
-                    result.arr = new short int [j];
-                    for (int i = j-1, n = 0; i >= 0; --i)
+                    result.arr = new short int [result.allocated];
+                    for (int i = j-1, n = 0; i >= start; --i)
                         result.arr[n++] = quotient[i];
                 }
             }
@@ -685,5 +698,4 @@ namespace my {
         return result;
     }
 }
-
 #endif
