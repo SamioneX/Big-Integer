@@ -224,7 +224,7 @@ namespace my {
                     result.arr[0] = a[0];
                 }
                 else {
-                    free(result.arr);
+                    delete [] result.arr;
                     result.allocated = j; result.inUse = 0;
                     result.arr = new short int[j];
                     for (--j; j >= 0; --j)
