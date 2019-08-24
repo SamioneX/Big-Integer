@@ -692,7 +692,7 @@ namespace my {
         return is;
     }
     BigInt factorial(unsigned int n) {
-        BigInt result = 1;
+        BigInt result(1,1);
         for (; n > 1; --n)
             result *= n;
         return result;
