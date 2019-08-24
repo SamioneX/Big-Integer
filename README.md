@@ -50,9 +50,9 @@ The division operators throws a divisionByZero exception if the divisor is less 
 
 12) BigInt operator/ (long divisor);
 
-13) BigInt& operator<< (int n); -> Left shift by n. This is tantamount to multiplying this by 10^n.
+13) BigInt& operator<< (unsigned int n); -> Left shift by n. This is tantamount to multiplying this by 10^n.
 
-14) BigInt& operator>> (int n); -> Right shift by n. This is tantamount to dividing this by 10^n.
+14) BigInt& operator>> (unsigned int n); -> Right shift by n. This is tantamount to dividing this by 10^n.
 
 ---------------------------Non-member Math operators----------------------------
 For the functions below, T must be an integer or floating point type.
@@ -102,7 +102,7 @@ Non-member relational operators:
 
 3) void shrink_to_fit();
 
--------------------------------Other Non-member Overloads---------------------
+-------------------------------Other Non-member Functions---------------------
 1) swap(BigInt& a, BigInt& b);
 
 2) std::string to_string(const BigInt& b);
@@ -110,3 +110,5 @@ Non-member relational operators:
 3) std::ostream& operator<<(std::ostream& os, const BigInt& b);
 
 4) std::istream& operator>>(std::istream& os, BigInt& b);
+
+5) BigInt factorial(unsigned int);
