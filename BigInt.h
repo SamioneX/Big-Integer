@@ -1,6 +1,3 @@
-#ifndef BIGINT_H
-#define BIGINT_H
-
 #include <iostream>
 
 namespace my {
@@ -31,6 +28,29 @@ namespace my {
             delete [] arr;
             arr = temp;
         }
+        //Find lower bound for a number
+        template<typename T>
+        int lower_bound(T* arr, T n, int size) const {
+            int i = 0, j = size, mid;
+            while (i < j) {
+                mid = (i + j) / 2;
+
+                if (arr[mid] == n)
+                    return mid;
+
+                if (n < arr[mid]) {
+                    if (mid > 0 && n >= arr[mid-1])
+                        return mid-1;
+                    j = mid;
+                }
+                else {
+                    if (mid < size-1 && n < arr[mid+1])
+                        return mid;
+                    i = mid+1;
+                }
+            }
+            return -1; //this never executes because n is bound to be within the range.
+        }
         int numLength(long long n) const {
             if (!lengths[0]) { //this executes only once
                 lengths[0] = 10;
@@ -40,26 +60,7 @@ namespace my {
             }
             if (n < 10) return 1;
             if (n == lengths[18]) return 19;
-            //Use binary search to find the length of n
-            int i = 0, j = 19, mid;
-            while (i < j) {
-                mid = (i + j) / 2;
-
-                if (lengths[mid] == n)
-                    return mid+2;
-
-                if (n < lengths[mid]) {
-                    if (mid > 0 && n >= lengths[mid-1])
-                        return mid+1;
-                    j = mid;
-                }
-                else {
-                    if (mid < 18 && n < lengths[mid+1])
-                        return mid+2;
-                    i = mid+1;
-                }
-            }
-            return -1;   //this never executes since the n must be within the range of 0 to LL_MAX
+            return lower_bound(lengths, n, 19) + 2;
         }
         //used in all move operations
         void move(BigInt&& b) {
@@ -69,12 +70,12 @@ namespace my {
             isNeg = b.isNeg; b.isNeg = false;
             arr = b.arr; b.arr = new short int[1]; b.arr[0] = 0;
         }
-        //Resets value to zero
-        void reset() {
+        //Resets value to a unit number
+        void reset(int val = 0, bool isNeg = false) {
             delete [] arr;
-            allocated = 1; inUse = 1; isNeg = false;
+            allocated = 1; inUse = 1; this->isNeg = isNeg;
             arr = new short int[allocated];
-            arr[0] = 0;
+            arr[0] = val;
         }
         //compares two arrays of integers in reverse manner starting from the last element
         int compare_help(short int* a, int a_size, short int* b, int b_size) const {
@@ -124,7 +125,7 @@ namespace my {
         }
         
         BigInt add(const BigInt& b, bool move = false) {
-            BigInt result((inUse > b.inUse? inUse + 1 : b.inUse + 1), isNeg);
+            BigInt result((inUse > b.inUse? inUse + 1 : b.inUse + 1), 0, isNeg);
 
             int carry = 0, i = 0, sum;
             for (; i < b.inUse; ++i) {
@@ -171,7 +172,7 @@ namespace my {
             return i;
         }
         BigInt subtract(const BigInt& b, bool move = false) {
-            BigInt result((inUse > b.inUse? inUse : b.inUse), isNeg);
+            BigInt result((inUse > b.inUse? inUse : b.inUse), 0, isNeg);
 
             //find which of the numbers is smaller and let 'l' point to the larger one
             //and 's' to the smaller one
@@ -192,7 +193,7 @@ namespace my {
             return result;
         }
         BigInt multiply (const BigInt& b, bool move = false) {
-            BigInt result(inUse+b.inUse, (b.isNeg? !isNeg : isNeg));
+            BigInt result(inUse+b.inUse, 0, (b.isNeg? !isNeg : isNeg));
             if (inUse + b.inUse + 1 < 19)
                 result.move((long long)*this * (long long)b);
             else {
@@ -219,7 +220,7 @@ namespace my {
             return result;
         }
         BigInt multiply(long& n, bool move = false) {
-            BigInt result(inUse+4, (n < 0? !isNeg : isNeg));
+            BigInt result(inUse+4, 0, (n < 0? !isNeg : isNeg));
             long x = (n < 0)? -n : n;
             long long carry = 0;
             int i = 0;
@@ -389,8 +390,10 @@ namespace my {
             long long max = 922337203685477580;
             if (inUse == 1) {
                 res = arr[0] % modulus;
-                if (res > 0 && isNeg) res = -res;
+                if (res && isNeg) res = -res;
             }
+            else if (modulus == 1) return 0;
+            else if (modulus == 2) return (isNeg? -arr[0] : arr[0]) % 2;
             else if (inUse < 19)
                 res = (long long)*this % modulus;
             else if (modulus > max)
@@ -398,6 +401,7 @@ namespace my {
             else {
                 for (int i = inUse-1; i >= 0; --i)
                     res = (res*10 + arr[i]) % modulus;
+                if (res && isNeg) res = -res;
             }
             return res;
         }
@@ -408,6 +412,14 @@ namespace my {
             if (inUse == 1) {
                 arr[0] %= modulus;
                 if (!arr[0]) isNeg = false;
+            }
+            else if (modulus == 1) this->reset();
+            else if (modulus == 2) {
+                short int i = arr[0] % 2;
+                if (i == 0)
+                    this->reset();
+                else
+                    this->reset(1, isNeg);
             }
             else if (inUse < 19)
                 this->move((long long)*this % modulus);
@@ -422,61 +434,143 @@ namespace my {
             return *this;
         }
         BigInt modulo3(const BigInt& b, bool move = false) {
-            if (b.inUse == 1 && b.arr[0] == 0)
-                throw divisionByZero("Error In BigInt: divisionByZero check\n");
             BigInt result;
-            
-            if (this->inUse < 19 && b.inUse < 19)
-                result.move((long long)*this % (long long)b);
-            else if (b.inUse <= inUse) {
-                short int quotient[inUse-b.inUse+1], temp[b.inUse+1];
-                int j = 0, m = b.inUse+1;
-                int t_pos = m;
-                divide_modulo_helper(b, quotient, temp, j, t_pos, m);
+            bool done = false;
+            if (b.inUse == 1) {
+                if (b.arr[0] == 0)
+                    throw divisionByZero("Error In BigInt: divisionByZero check\n");
+                else if (b.arr[0] == 1)
+                    done = true;
+                else if (b.arr[0] == 2) {
+                    done = true;
+                    result.arr[0] = arr[0] % 2;
+                    if (result.arr[0]) result.isNeg = isNeg;
+                }   
+            }
+            if (!done) {
+                if (this->inUse < 19 && b.inUse < 19)
+                    result.move((long long)*this % (long long)b);
+                else if (b.inUse <= inUse) {
+                    short int quotient[inUse-b.inUse+1], temp[b.inUse+1];
+                    int j = 0, m = b.inUse+1;
+                    int t_pos = m;
+                    divide_modulo_helper(b, quotient, temp, j, t_pos, m);
 
-                if (t_pos != m) {
-                    delete [] result.arr;
-                    result.allocated = m - t_pos;
-                    result.arr = new short int[allocated];
-                    result.inUse = 0;
-                    for (; t_pos < m; ++t_pos)
-                        result.arr[result.inUse++] = temp[t_pos];
-                    if (!result)
-                        result.isNeg = isNeg;
+                    if (t_pos != m) {
+                        delete [] result.arr;
+                        result.allocated = m - t_pos;
+                        result.arr = new short int[allocated];
+                        result.inUse = 0;
+                        for (; t_pos < m; ++t_pos)
+                            result.arr[result.inUse++] = temp[t_pos];
+                        if (!result)
+                            result.isNeg = isNeg;
+                    }
                 }
             }
             if (move) this->move(std::forward<BigInt&&>(result));
             return result;
         }
-        BigInt (int size, bool isNeg) {
+        void check_and_fill() {
+            if (!pow2[0]) {
+                pow2[0] = 2;
+                for (int i = 1; i < 63; ++i)
+                    pow2[i] = 2 * pow2[i-1];
+            }
+        }
+        template<typename Collection>
+        void bitsHelper(BigInt& b, Collection& c) {
+            bool x = b % 2;
+            if (b.inUse > 1 || b.arr[0] > 1) {
+                b /= 2;
+                bitsHelper(b, c);
+            }
+            c.push_back(x);
+        }
+        void bitStringHelper(BigInt& b, std::string& s, int count = 0) {
+            bool x = b % 2;
+            if (b.inUse > 1 || b.arr[0] > 1) {
+                b /= 2;
+                bitStringHelper(b, s);
+            }
+            s.push_back('0'+x);
+        }
+        std::string to_words_helper(short int* arr, int end, bool& isNeg) {
+            std::string s;
+            if (isNeg) {
+                s += "minus ";
+                isNeg = false;
+            }
+            static std::string units[] = {"Zero", "One", "Two", "Three", "Four",
+            "Five", "Six", "Seven", "Eight", "Nine"};
+
+            static std::string teens[] = {"Ten", "Eleven", "Twelve", "Thirteen",
+            "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"};
+
+            static std::string tens_multiples[] = {"Twenty", "Thirty", "Forty",
+            "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"};
+
+            static std::string th_powers[] = {"Thousand", "Million", "Billion",
+            "Trillion", "Quadrillion", "Quintillion", "Sextillion", "Septillion",
+            "Octillion", "Nonillion", "Decillion", "Undecillion", "Duodecillion",
+            "Tredecillion", "Quattuordecillion", "Quindecillion", "Sexdecillion",
+            "Septendecillion", "Octodecillion", "Novemdecillion", "Vigintillion"};
+
+            static int powers[] = {4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37,
+                                40, 43, 46, 49, 52, 55, 58, 61, 64};
+    
+            if (end == 1)
+                s += units[arr[0]];
+            else if (end == 2 && arr[1] == 1)
+                s += teens[arr[0]];
+            else if (end < 3) {
+                s += tens_multiples[arr[1] - 2];
+                if (arr[0])
+                    s += "-" + units[arr[0]];
+            }
+            else if (end < 4) {
+                s += units[arr[2]] + " Hundred";
+                --end;
+                while (end > 0 && arr[end-1] == 0) --end;
+                if (end > 0)
+                    s += " and " + to_words_helper(arr, end, isNeg);
+            }
+            else {
+                int x = lower_bound(powers, end, 21);
+                s += to_words_helper(arr+powers[x]-1, end-powers[x]+1, isNeg) + " " + th_powers[x];
+                end = powers[x]-1;
+                while (end > 0 && arr[end-1] == 0) --end;
+                if (end > 0) {
+                    s += (end < 3)? " and " : ", ";
+                    s += to_words_helper(arr, end, isNeg);
+                }
+            }
+            return s;
+        }
+
+        //Private Constructor
+        BigInt (int size, int x, bool isNeg) {
             allocated = size;
             this->isNeg = isNeg;
-            inUse = 0;
+            inUse = x;
             arr = new short int[allocated];
         }
         public:
         BigInt() {
             arr = NULL; reset();
         }
-        template <typename T,
-            typename = typename std::enable_if<std::is_integral<T>::value>::type>
-        BigInt(T n, int length) {
-            if (n < 0) {
-                isNeg = true;  n = -n;
+        BigInt(unsigned short n, int count) {
+            if (n < 1 || n > 9) {
+                arr = NULL; reset();
             }
-            else
+            else {
+                allocated = count;
+                arr = new short int[allocated];
+                for (inUse = 0; inUse < count; ++inUse)
+                    arr[inUse] = n;
                 isNeg = false;
-            allocated = length;
-            arr = new short int[allocated];
-            inUse = 0;
-            arr[inUse++] = n % 10;
-            for (; inUse < length && n >= 10; ++inUse) {
-                n /= 10;
-                arr[inUse] = n % 10;
             }
-            while (inUse > 1 && arr[inUse-1] == 0) --inUse;
         }
-
         template <typename T,
             typename = typename std::enable_if<std::is_integral<T>::value>::type>
         BigInt(T n) {
@@ -572,44 +666,6 @@ namespace my {
             for (int i = inUse-1; i >= 0; i--)
                 result[j++] = '0' + arr[i];
             return result;
-        }
-        BigInt& left_shift (unsigned int n) {
-            if (inUse > 1 || arr[0] > 0) {
-                allocated = inUse+n;
-                short int* temp = new short int[allocated];
-                int j = allocated-1;
-                for (int i = inUse-1; i >= 0; --i, --j)
-                    temp[j] = arr[i];
-                for (; j >= 0; --j)
-                    temp[j] = 0;
-                inUse = allocated;
-                delete [] arr;
-                arr = temp;
-            }
-            return *this;
-        }
-        BigInt& right_shift (unsigned int n) {
-            if (inUse > 1 || arr[0] > 0) {
-                if (n >= inUse) {
-                    delete [] arr;
-                    allocated = 1; inUse = 1;
-                    arr = new short int[allocated];
-                    arr[0] = 0;
-                }
-                else {
-                    for (int i = n; i < inUse; ++i)
-                        arr[i-n] = arr[i];
-                    inUse -= n;
-                }
-            }
-            return *this;
-        }
-        void check_and_fill() {
-            if (!pow2[0]) {
-                pow2[0] = 2;
-                for (int i = 1; i < 63; ++i)
-                    pow2[i] = 2 * pow2[i-1];
-            }
         }
         BigInt& operator<<= (unsigned int n) {
             check_and_fill();
@@ -801,13 +857,22 @@ namespace my {
         template <typename T,
             typename = typename std::enable_if<std::is_integral<T>::value>::type>
         friend T& operator%=(T& t, const BigInt& b) {
-            t %= (T)b;
+            if (b.inUse < 19)
+                t %= (T)b;
+            else if (t > 999999999999999999) {
+                t = (T) (BigInt(t) % b);
+            }
             return t;
         }
         template <typename T,
             typename = typename std::enable_if<std::is_integral<T>::value>::type>
         friend T operator%(T t, const BigInt& b) {
-            return t % (T)b;
+            if (b.inUse < 19)
+                return t % (T)b;
+            else if (t > 999999999999999999) {
+                return (T) (BigInt(t) % b);
+            }
+            return t;
         }
         BigInt& operator=(const BigInt& b) {
             if (this != &b) {
@@ -817,6 +882,65 @@ namespace my {
                 arr = new short int[allocated];
                 for (int i = 0; i < inUse; ++i)
                     arr[i] = b.arr[i];
+            }
+            return *this;
+        }
+        BigInt operator-() {
+            BigInt result = *this;
+            if (result)
+                result.isNeg = !isNeg;
+            return result;
+        }
+        BigInt& negate() {
+            if (*this)
+                isNeg = !isNeg;
+            return *this;
+        }
+        short operator[] (unsigned int i) {
+            if (i >= inUse) return 0;
+            return arr[inUse-i-1];
+        }
+        template<typename T, typename A,
+            template <typename, typename> class Collection, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+        void to_bits(Collection<T, A>& c) {
+            BigInt temp = *this;
+            bitsHelper(temp, c);
+        }
+        std::string to_bit_string() {
+            std::string res;
+            res.reserve(inUse*2);
+            BigInt temp = *this;
+            bitStringHelper(temp, res);
+            return res;
+        }
+        BigInt& left_shift (unsigned int n) {
+            if (inUse > 1 || arr[0] > 0) {
+                allocated = inUse+n;
+                short int* temp = new short int[allocated];
+                int j = allocated-1;
+                for (int i = inUse-1; i >= 0; --i, --j)
+                    temp[j] = arr[i];
+                for (; j >= 0; --j)
+                    temp[j] = 0;
+                inUse = allocated;
+                delete [] arr;
+                arr = temp;
+            }
+            return *this;
+        }
+        BigInt& right_shift (unsigned int n) {
+            if (inUse > 1 || arr[0] > 0) {
+                if (n >= inUse) {
+                    delete [] arr;
+                    allocated = 1; inUse = 1;
+                    arr = new short int[allocated];
+                    arr[0] = 0;
+                }
+                else {
+                    for (int i = n; i < inUse; ++i)
+                        arr[i-n] = arr[i];
+                    inUse -= n;
+                }
             }
             return *this;
         }
@@ -840,14 +964,39 @@ namespace my {
             arr = temp;
         }
 
+        std::string to_words() {
+            if (inUse > 64)
+                return "undefined";
+            else {
+                bool neg = isNeg;
+                return to_words_helper(arr, inUse, neg);
+            }  
+        }
+
         friend void swap(BigInt& a, BigInt& b) {
             short int* t_arr = b.arr; b.arr = a.arr; a.arr = t_arr;
             size_t t_inUse = b.inUse; b.inUse = a.inUse; a.inUse = t_inUse;
             size_t cap = b.allocated; b.allocated = a.allocated; a.allocated = cap;
             bool neg = b.isNeg; b.isNeg = a.isNeg; a.isNeg = neg;
         }
+        friend BigInt abs(const BigInt& b) {
+            BigInt result = b;
+            result.isNeg = false;
+            return result;
+        }
+        friend BigInt pow(BigInt x, unsigned int y) {
+            BigInt res(1,1);
 
-        friend std::string to_string(const BigInt&);
+            while (y > 0) { 
+                if (y % 2 == 1)
+                    res *= x;
+    
+                y = y >> 1;
+                x *= x;
+            } 
+            return res;
+        }
+        friend std::string to_string(const BigInt& b) {return (std::string)b;}
         friend std::ostream& operator<<(std::ostream& os, const BigInt& b);
         friend std::istream& operator>>(std::istream& os, BigInt& b);
     };
@@ -872,9 +1021,7 @@ namespace my {
         return lhs.compare(rhs) != 0;
     }
     /*----------------------------------------------------*/
-    std::string to_string(const BigInt& b) {
-        return (std::string)b;
-    }
+    
     std::ostream& operator<<(std::ostream& os, const BigInt& b) {
         if (b.isNeg)
             os << '-';
@@ -888,11 +1035,12 @@ namespace my {
         b.move(BigInt(s.c_str()));
         return is;
     }
+    
     BigInt factorial(unsigned int n) {
         BigInt result(1,1);
         for (; n > 1; --n)
             result *= n;
         return result;
     }
+        
 }
-#endif
