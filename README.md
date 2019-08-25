@@ -22,6 +22,7 @@ A signed class of integers to store integers of unlimited length.
 2) BigInt& operator= (BigInt&& b); -> Move assignment operator. this becomes b, b becomes zero.
 
 ------------------------------Number Operators and Functions-----------------------------
+
 Note: If a primitive type is passed as parameter to a function below without a primitive type overload, a BigInt is constructed from the value and passed to the function;
 
 1) BigInt& operator+= (const BigInt& b);
