@@ -29,47 +29,49 @@ Note: If a primitive type is passed as parameter to a function below without a p
 
 2) BigInt operator+ (const BigInt& b);
 
-3) BigInt& operator-= (const BigInt& b);
+3) BigInt& operator-= (const BigInt& b); ->subtract and assign
 
-4) BigInt operator- (const BigInt& b);
+4) BigInt operator- (const BigInt& b); ->subtract
 
-5) BigInt& operator*= (const BigInt& b);
+5) BigInt operator-(); ->negate
 
-6) BigInt operator* (const BigInt& b);
+6) BigInt& operator*= (const BigInt& b);
 
-7) BigInt& operator*= (long  multiplier);
+7) BigInt operator* (const BigInt& b);
 
-8) BigInt operator* (long  multiplier);
+8) BigInt& operator*= (long  multiplier);
+
+9) BigInt operator* (long  multiplier);
 
 The division operators throw a divisionByZero exception if the divisor is less than the dividend.
 
-9) BigInt& operator/= (const BigInt& b);
+10) BigInt& operator/= (const BigInt& b);
 
-10) BigInt operator/ (const BigInt& b);
+11) BigInt operator/ (const BigInt& b);
 
-11) BigInt& operator/= (long divisor);
+12) BigInt& operator/= (long divisor);
 
-12) BigInt operator/ (long divisor);
+13) BigInt operator/ (long divisor);
 
-13) BigInt operator%(const BigInt& b);
+14) BigInt operator%(const BigInt& b);
 
-14) BigInt& operator%=(const BigInt& b);
+15) BigInt& operator%=(const BigInt& b);
 
-15) long long operator%(long long b);
+16) long long operator%(long long b);
 
-16) BigInt& operator%=(long long b);
+17) BigInt& operator%=(long long b);
 
-17) BigInt operator<< (unsigned int n); -> Bit wise left-shift by n. This is tantamount to multiplying this by 2^n.
+18) BigInt operator<< (unsigned int n); -> Bit wise left-shift by n. This is tantamount to multiplying this by 2^n.
 
-18) BigInt operator>> (unsigned int n); -> Bit wise right-shift by n. This is tantamount to dividing this by 2^n.
+19) BigInt operator>> (unsigned int n); -> Bit wise right-shift by n. This is tantamount to dividing this by 2^n.
 
-19) BigInt& operator<<= (unsigned int n);
+20) BigInt& operator<<= (unsigned int n);
 
-20) BigInt& operator>>= (unsigned int n);
+21) BigInt& operator>>= (unsigned int n);
 
-21) BigInt& left_shift (unsigned int); -> Decimal left-shift by n. This is tantamount to multiplying this by 10^n.
+22) BigInt& left_shift (unsigned int); -> Decimal left-shift by n. This is tantamount to multiplying this by 10^n.
 
-22) BigInt& right_shift (unsigned int n); -> Decimal right-shift by n. This is tantamount to dividing this by 10^n.
+23) BigInt& right_shift (unsigned int n); -> Decimal right-shift by n. This is tantamount to dividing this by 10^n.
 
 ---------------------------Non-member Math operators----------------------------
 
@@ -124,6 +126,8 @@ Non-member relational operators:
 
 -------------------------------Other Non-member Functions---------------------
 1) swap(BigInt& a, BigInt& b);
+
+2) BigInt abs(const BigInt& b); ->get absolute value
 
 2) std::string to_string(const BigInt& b);
 
