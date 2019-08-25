@@ -32,22 +32,24 @@ namespace my {
             arr = temp;
         }
         int numLength(long long n) const {
-            if (!lengths[0]) {     //this executes only once
+            if (!lengths[0]) { //this executes only once
                 lengths[0] = 10;
                 for (int i = 1; i < 18; ++i)
                     lengths[i] = 10 * lengths[i-1];
-                lengths[18] = 9223372036854775807;   //LL_Max
+                lengths[18] = 9223372036854775807;  //LL_MAX
             }
             if (n < 10) return 1;
+            if (n == lengths[18]) return 19;
             //Use binary search to find the length of n
             int i = 0, j = 19, mid;
             while (i < j) {
                 mid = (i + j) / 2;
 
-                if (lengths[mid] == n) 
-                    return mid+1;
+                if (lengths[mid] == n)
+                    return mid+2;
+
                 if (n < lengths[mid]) {
-                    if (mid > 0 && n > lengths[mid-1])
+                    if (mid > 0 && n >= lengths[mid-1])
                         return mid+1;
                     j = mid;
                 }
@@ -57,7 +59,7 @@ namespace my {
                     i = mid+1;
                 }
             }
-            return mid+1;
+            return -1;   //this never executes since the n must be within the range of 0 to LL_MAX
         }
         //used in all move operations
         void move(BigInt&& b) {
