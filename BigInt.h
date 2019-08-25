@@ -2,14 +2,19 @@
 #define BIGINT_H
 
 #include <iostream>
-#include <cmath>
 
 namespace my {
     struct divisionByZero : public std::exception {
+        const char* msg;
+        divisionByZero(const char* s = "Error! divisionByZero\n") {
+            msg = s;
+        }
         const char * what () const throw () {
-            return "in BigInt: division by zero check.";
+            return msg;
         }
     };
+    long long pow2[63] = {0};  //look up table for left & right shifting
+    long long lengths[19] = {0}; //look up table to find number lengths
 
     class BigInt {
         private:
@@ -27,7 +32,31 @@ namespace my {
             arr = temp;
         }
         int numLength(long long n) const {
-            return (n < 10)? 1: floor(log10(n)) + 1;
+            if (!lengths[0]) {
+                lengths[0] = 10;
+                for (int i = 1; i < 18; ++i)
+                    lengths[i] = 10 * lengths[i-1];
+                lengths[18] = 9223372036854775807;
+            }
+            if (n < 10) return 1;
+            int i = 0, j = 19, mid;
+            while (i < j) {
+                mid = (i + j) / 2;
+
+                if (lengths[mid] == n) 
+                    return mid+1;
+                if (n < lengths[mid]) {
+                    if (mid > 0 && n > lengths[mid-1])
+                        return mid+1;
+                    j = mid;
+                }
+                else {
+                    if (mid < 18 && n < lengths[mid+1])
+                        return mid+2;
+                    i = mid+1;
+                }
+            }
+            return mid+1;
         }
         void move(BigInt&& b) {
             delete [] arr;
@@ -79,6 +108,10 @@ namespace my {
             }
             if (i>1 && i == inUse && arr[i-1] == 0)
                 --inUse;
+        }
+        BigInt& getLL_Max() {
+            static BigInt LL_Max("18446744073709551616");
+            return LL_Max;
         }
         BigInt add(const BigInt& b, bool move = false) {
             BigInt result((inUse > b.inUse? inUse + 1 : b.inUse + 1), isNeg);
@@ -200,13 +233,16 @@ namespace my {
         }
         BigInt divide(long& divisor, bool move = false) {
             if (divisor == 0)
-                throw divisionByZero();
+                throw divisionByZero("Error In BigInt: divisionByZero check\n");
             bool neg = divisor < 0? !isNeg : isNeg;
             BigInt result;
             if (inUse == 1) {
                 int q = arr[0] / divisor;
                 if (q > 0) result.isNeg = neg;
                 result.arr[0] = q;
+            }
+            else if (inUse < 19) {
+                result.move((long long)*this / divisor);
             }
             else {  
                 short int a[inUse];
@@ -235,83 +271,91 @@ namespace my {
             if (move) this->move(std::forward<BigInt&&>(result));
             return result;
         }
-        
-        BigInt divide(const BigInt& b, bool move = false) {
-            if (b.inUse == 1 && b.arr[0] == 0)
-                throw divisionByZero();
-            BigInt result;
-            result.isNeg = b.isNeg? !isNeg : isNeg;
-            
-            /*if (this->inUse < 19 && b.inUse < 19)
-                result.move((long long)*this / (long long)b);*/
-            
+        void divide_modulo_helper(const BigInt& b, short int* quotient, short int* temp, int& j, int &t_pos, int &m) {
+
             /* Strategy: Get a number E with as many digits from N as their are in D
             * (get one more digit if E is smaller than the divisor). Use repeated subtraction
             * to divide E by D and append the quotient to result. Let E be the remainder left
             * from division. Append as many elements in D to it. Repeat the division.
             */ 
-            if (b.inUse <= inUse) {
-                int m = b.inUse+1;
-                short int quotient[inUse-b.inUse+1];
-                int j = 0, pos = inUse, t_pos = m, p = inUse-b.inUse;
-                short int temp[m];
+            int pos = inUse;
 
-                //loop till number of elements left is fewer than number of elements
-                // we need to divide with.
-                while (pos != 0 && pos >= t_pos - 1) {
+            //loop till number of elements left is fewer than number of elements
+            // we need to divide with.
+            while (pos > 0) {
 
-                    //if we have b.inUse length of remainders, get one more digit since the remainder is
-                    //guaranteed to be less than b.
-                    if (t_pos == 1)
+                //if we have b.inUse length of remainders, get one more digit since the remainder is guaranteed to be less than b.
+                if (pos < t_pos - 1) {
+                    quotient[j++] = 0;
+                    break;
+                }
+                if (t_pos == 1)
+                    temp[--t_pos] = arr[--pos];
+                //else get an extra t_pos-1 digits.
+                else {
+                    while (t_pos > 1)
                         temp[--t_pos] = arr[--pos];
-                    //else get an extra t_pos-1 digits.
-                    else {
-                        while (t_pos > 1)
-                            temp[--t_pos] = arr[--pos];
-                    }
+                }
 
-                    int diff = compare_help(temp+t_pos, m-t_pos, b.arr, b.inUse);
-                    if (diff == 0) {
-                        quotient[j++] = 1;
-                        t_pos = m;
-                    }    
-                    else {
-                        if (diff < 0) {
-                            quotient[j++] = 0;
-                            if (pos == 0) break;
-                            //get an extra digit since temp is less than b.
-                            temp[--t_pos] = arr[--pos];
-                        }
+                int diff = compare_help(temp+t_pos, m-t_pos, b.arr, b.inUse);
+                if (diff == 0) {
+                    quotient[j++] = 1;
+                    t_pos = m;
+                }    
+                else {
+                    if (diff < 0) {
+                        quotient[j++] = 0;
+                        if (pos == 0) break;
+                        //get an extra digit since temp is less than b.
+                        temp[--t_pos] = arr[--pos];
+                    }
                         
-                        short int* t = temp+t_pos; //used to offset the array for when t_pos == 1 || 0
-                        int q = 0, i = m-t_pos;
+                    short int* t = temp+t_pos; //used to offset the array for when t_pos == 1 || 0
+                    int q = 0, i = m-t_pos;
                         
-                        //Perform division by repeated subtraction
-                        while (i > b.inUse || (i == b.inUse && t[i-1] > b.arr[i-1])) {
+                    //Perform division by repeated subtraction
+                    while (i > b.inUse || (i == b.inUse && t[i-1] > b.arr[i-1])) {
+                        i = doSubtract(t, i, b.arr, b.inUse, t);
+                        ++q;
+                    }
+                    if (i == b.inUse) {
+                        int n = compare_help(t, i, b.arr, i);
+                        if (n > 0) {
                             i = doSubtract(t, i, b.arr, b.inUse, t);
                             ++q;
                         }
-                        if (i == b.inUse) {
-                            int n = compare_help(t, i, b.arr, i);
-                            if (n > 0) {
-                                i = doSubtract(t, i, b.arr, b.inUse, t);
-                                ++q;
-                            }
-                            else if (n == 0) {
-                                i = 0; ++q;
-                            }
-                        }
-                        quotient[j++] = q;
-                        //update t_pos and shift the remainder to the end of the array if there's any
-                        if (i == 0) t_pos = m;
-                        else if (i == m-t_pos) t_pos = 1;
-                        else {
-                            t_pos = m;
-                            for (int n = i-1; n >= 0; --n)
-                                temp[--t_pos] = t[n];
+                        else if (n == 0) {
+                            i = 0; ++q;
                         }
                     }
+                    quotient[j++] = q;
+                    //update t_pos and shift the remainder to the end of the array if there's any
+                    if (i == 0) t_pos = m;
+                    else if (i == m-t_pos) t_pos = 1;
+                    else {
+                        t_pos = m;
+                        for (int n = i-1; n >= 0; --n)
+                            temp[--t_pos] = t[n];
+                    }
                 }
+            }
+        }
+        
+        BigInt divide(const BigInt& b, bool move = false) {
+            if (b.inUse == 1 && b.arr[0] == 0)
+                throw divisionByZero("Error In BigInt: divisionByZero check\n");
+            BigInt result;
+            result.isNeg = b.isNeg? !isNeg : isNeg;
+            
+            if (this->inUse < 19 && b.inUse < 19)
+                result.move((long long)*this / (long long)b);
+            
+            else if (b.inUse <= inUse) {
+                short int quotient[inUse-b.inUse+1], temp[b.inUse+1];
+                int j = 0, m = b.inUse+1;
+                int t_pos = m;
+                divide_modulo_helper(b, quotient, temp, j, t_pos, m);
+                
                 if (j == 1) result.arr[0] = quotient[0];
                 else {
                     int start = 0;
@@ -322,6 +366,72 @@ namespace my {
                     result.arr = new short int [result.allocated];
                     for (int i = j-1, n = 0; i >= start; --i)
                         result.arr[n++] = quotient[i];
+                }
+            }
+            if (move) this->move(std::forward<BigInt&&>(result));
+            return result;
+        }
+        long long modulo1(long long modulus) {
+            if (modulus == 0)
+                throw divisionByZero("Error In BigInt: divisionByZero check\n");
+            long long res = 0;
+            long long max = 922337203685477580;
+            if (inUse == 1) {
+                res = arr[0] % modulus;
+                if (res > 0 && isNeg) res = -res;
+            }
+            else if (inUse < 19)
+                res = (long long)*this % modulus;
+            else if (modulus > max)
+                res = (long long)modulo3(BigInt(modulus));
+            else {
+                for (int i = inUse-1; i >= 0; --i)
+                    res = (res*10 + arr[i]) % modulus;
+            }
+            return res;
+        }
+        BigInt& modulo2(long long modulus) {
+            if (modulus == 0)
+                throw divisionByZero("Error In BigInt: divisionByZero check\n");
+            long long max = 922337203685477580;
+            if (inUse == 1) {
+                arr[0] %= modulus;
+                if (!arr[0]) isNeg = false;
+            }
+            else if (inUse < 19)
+                this->move((long long)*this % modulus);
+            else if (modulus > max)
+                modulo3(BigInt(modulus), true);
+            else {
+                long long res = 0;
+                for (int i = inUse-1; i >= 0; --i)
+                    res = (res*10 + arr[i]) % modulus;
+                this->move(BigInt(res));
+            }
+            return *this;
+        }
+        BigInt modulo3(const BigInt& b, bool move = false) {
+            if (b.inUse == 1 && b.arr[0] == 0)
+                throw divisionByZero("Error In BigInt: divisionByZero check\n");
+            BigInt result;
+            
+            if (this->inUse < 19 && b.inUse < 19)
+                result.move((long long)*this % (long long)b);
+            else if (b.inUse <= inUse) {
+                short int quotient[inUse-b.inUse+1], temp[b.inUse+1];
+                int j = 0, m = b.inUse+1;
+                int t_pos = m;
+                divide_modulo_helper(b, quotient, temp, j, t_pos, m);
+
+                if (t_pos != m) {
+                    delete [] result.arr;
+                    result.allocated = m - t_pos;
+                    result.arr = new short int[allocated];
+                    result.inUse = 0;
+                    for (; t_pos < m; ++t_pos)
+                        result.arr[result.inUse++] = temp[t_pos];
+                    if (!result)
+                        result.isNeg = isNeg;
                 }
             }
             if (move) this->move(std::forward<BigInt&&>(result));
@@ -439,7 +549,7 @@ namespace my {
         template<bool> explicit operator bool() const {
             return (inUse > 1 || arr[0] > 0);
         }
-        BigInt& operator<< (unsigned int n) {
+        BigInt& left_shift (unsigned int n) {
             if (inUse > 1 || arr[0] > 0) {
                 allocated = inUse+n;
                 short int* temp = new short int[allocated];
@@ -454,7 +564,7 @@ namespace my {
             }
             return *this;
         }
-        BigInt& operator>> (unsigned int n) {
+        BigInt& right_shift (unsigned int n) {
             if (inUse > 1 || arr[0] > 0) {
                 if (n >= inUse) {
                     delete [] arr;
@@ -469,6 +579,55 @@ namespace my {
                 }
             }
             return *this;
+        }
+        void check_and_fill() {
+            if (!pow2[0]) {
+                pow2[0] = 2;
+                for (int i = 1; i < 63; ++i)
+                    pow2[i] = 2 * pow2[i-1];
+            }
+        }
+        BigInt& operator<<= (unsigned int n) {
+            check_and_fill();
+            while (n >= 64) {
+                *this *= getLL_Max();
+                n -= 64;
+            }
+            if (n > 0)
+                *this *= pow2[n-1];
+            return *this;
+        }
+        BigInt& operator>>= (unsigned int n) {
+            check_and_fill();
+            while (n >= 64) {
+                *this /= getLL_Max();
+                n -= 64;
+            }
+            if (n > 0)
+                *this /= pow2[n-1];
+            return *this;
+        }
+        BigInt operator>> (unsigned int n) {
+            check_and_fill();
+            BigInt result = *this;
+            while (n >= 64) {
+                result /= getLL_Max();
+                n -= 64;
+            }
+            if (n > 0)
+                result /= pow2[n-1];
+            return result;
+        }
+        BigInt operator<< (unsigned int n) {
+            check_and_fill();
+            BigInt result = *this;
+            while (n >= 64) {
+                result *= getLL_Max();
+                n -= 64;
+            }
+            if (n > 0)
+                result *= pow2[n-1];
+            return result;
         }
         BigInt& operator+=(const BigInt& b) {
             if (isNeg != b.isNeg)
@@ -550,6 +709,19 @@ namespace my {
             divide(b, true);
             return *this;
         }
+        BigInt operator%(const BigInt& b) {
+            return modulo3(b);
+        }
+        BigInt& operator%=(const BigInt& b) {
+            modulo3(b, true);
+            return *this;
+        }
+        long long operator%(long long b) {
+            return modulo1(b);
+        }
+        BigInt& operator%=(long long b) {
+            return modulo2(b);
+        }
         template <typename T,
             typename = typename std::enable_if<std::is_integral<T>::value ||
                 std::is_floating_point<T>::value>::type>
@@ -601,6 +773,17 @@ namespace my {
                 std::is_floating_point<T>::value>::type>
         friend T operator/(T t, const BigInt& b) {
             return t + (T)b;
+        }
+        template <typename T,
+            typename = typename std::enable_if<std::is_integral<T>::value>::type>
+        friend T& operator%=(T& t, const BigInt& b) {
+            t %= (T)b;
+            return t;
+        }
+        template <typename T,
+            typename = typename std::enable_if<std::is_integral<T>::value>::type>
+        friend T operator%(T t, const BigInt& b) {
+            return t % (T)b;
         }
         BigInt& operator=(const BigInt& b) {
             if (this != &b) {
