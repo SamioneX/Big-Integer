@@ -558,6 +558,19 @@ namespace my {
         template<bool> explicit operator bool() const {
             return (inUse > 1 || arr[0] > 0);
         }
+        explicit operator std::string() const {
+            std::string result;
+            int j = 0;
+            if (isNeg) {
+                result.resize(inUse + 1);
+                result[j++] = '-';
+            }
+            else
+                result.resize(inUse);
+            for (int i = inUse-1; i >= 0; i--)
+                result[j++] = '0' + arr[i];
+            return result;
+        }
         BigInt& left_shift (unsigned int n) {
             if (inUse > 1 || arr[0] > 0) {
                 allocated = inUse+n;
@@ -858,17 +871,7 @@ namespace my {
     }
     /*----------------------------------------------------*/
     std::string to_string(const BigInt& b) {
-        std::string result;
-        int j = 0;
-        if (b.isNeg) {
-            result.resize(b.inUse + 1);
-            result[j++] = '-';
-        }
-        else
-            result.resize(b.inUse);
-        for (int i = b.inUse-1; i >= 0; i--)
-            result[j++] = '0' + b.arr[i];
-        return result;
+        return (std::string)b;
     }
     std::ostream& operator<<(std::ostream& os, const BigInt& b) {
         if (b.isNeg)
