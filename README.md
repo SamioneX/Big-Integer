@@ -69,7 +69,7 @@ The division operators throw a divisionByZero exception if the divisor is less t
 
 21) BigInt& left_shift (unsigned int); -> Decimal left-shift by n. This is tantamount to multiplying this by 10^n.
 
-22) BigInt& right_shift (unsigned int n); Decimal right-shift by n. This is tantamount to dividing this by 10^n.
+22) BigInt& right_shift (unsigned int n); -> Decimal right-shift by n. This is tantamount to dividing this by 10^n.
 
 ---------------------------Non-member Math operators----------------------------
 
