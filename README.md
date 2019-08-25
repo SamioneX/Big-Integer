@@ -92,9 +92,11 @@ For the functions below, T must be an integer or floating point type.
 4) template<typename T> T operator- (T t, const BigInt& b);
   
 ----------------------------Conversion Operators-----------------------
-1) template<typename T> operator T() const;  -> T must be an integer or floating point type.
+1) template<typename T> explicit operator T() const;  -> T must be an integer or floating point type.
   
-2) template<bool> operator bool() const; -> template specialization. Return true if number > 0.
+2) template<bool> explicit operator bool() const; -> template specialization. Return true if number > 0.
+  
+3) explicit operator std::string() const; -> convert to string;
   
 ------------------------------Comparison functions-----------------------
 1) int compare(const BigInt& b); -> return a number n. n is greater than 0 if this > b, equal to 0 if this == b, less than 0 if this < b.
