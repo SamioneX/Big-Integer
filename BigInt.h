@@ -32,13 +32,14 @@ namespace my {
             arr = temp;
         }
         int numLength(long long n) const {
-            if (!lengths[0]) {
+            if (!lengths[0]) {     //this executes only once
                 lengths[0] = 10;
                 for (int i = 1; i < 18; ++i)
                     lengths[i] = 10 * lengths[i-1];
-                lengths[18] = 9223372036854775807;
+                lengths[18] = 9223372036854775807;   //LL_Max
             }
             if (n < 10) return 1;
+            //Use binary search to find the length of n
             int i = 0, j = 19, mid;
             while (i < j) {
                 mid = (i + j) / 2;
@@ -58,6 +59,7 @@ namespace my {
             }
             return mid+1;
         }
+        //used in all move operations
         void move(BigInt&& b) {
             delete [] arr;
             allocated = b.allocated; b.allocated = 1;
@@ -65,12 +67,14 @@ namespace my {
             isNeg = b.isNeg; b.isNeg = false;
             arr = b.arr; b.arr = new short int[1]; b.arr[0] = 0;
         }
+        //Resets value to zero
         void reset() {
             delete [] arr;
             allocated = 1; inUse = 1; isNeg = false;
             arr = new short int[allocated];
             arr[0] = 0;
         }
+        //compares two arrays of integers in reverse manner starting from the last element
         int compare_help(short int* a, int a_size, short int* b, int b_size) const {
             if (a_size > b_size)
                 return 1;
@@ -82,6 +86,7 @@ namespace my {
             }
             return 0;
         }
+        /*--------------Increment and decrement operators helper functions-----------*/
         void increase() {
             int carry = 1, i = 0;
             while (carry) {
@@ -109,10 +114,13 @@ namespace my {
             if (i>1 && i == inUse && arr[i-1] == 0)
                 --inUse;
         }
+        /*------------------------------------------------------------------------------*/
+        //Used in left and right shift operators
         BigInt& getLL_Max() {
             static BigInt LL_Max("18446744073709551616");
             return LL_Max;
         }
+        
         BigInt add(const BigInt& b, bool move = false) {
             BigInt result((inUse > b.inUse? inUse + 1 : b.inUse + 1), isNeg);
 
@@ -284,7 +292,8 @@ namespace my {
             // we need to divide with.
             while (pos > 0) {
 
-                //if we have b.inUse length of remainders, get one more digit since the remainder is guaranteed to be less than b.
+                //if we have b.inUse length of remainders, get one more digit since the remainder
+                //is guaranteed to be less than b.
                 if (pos < t_pos - 1) {
                     quotient[j++] = 0;
                     break;
