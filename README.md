@@ -21,8 +21,8 @@ A signed class of integers to store integers of unlimited length.
 
 2) BigInt& operator= (BigInt&& b); -> Move assignment operator. this becomes b, b becomes zero.
 
-------------------------------Math Operators-----------------------------
-Note: If a primitive type is passed as parameter to the addition and subtraction functions below, a BigInt is constructed from it and used for the operation. The multiplication and division functions also accepts a primitive type of long int. If a longer primitive type is passed as argument, a BigInt is constructed from it and used for the operation.
+------------------------------Number Operators and Functions-----------------------------
+Note: If a primitive type is passed as parameter to a function below without a primitive type overload, a BigInt is constructed from the value and passed to the function;
 
 1) BigInt& operator+= (const BigInt& b);
 
@@ -50,9 +50,25 @@ The division operators throws a divisionByZero exception if the divisor is less 
 
 12) BigInt operator/ (long divisor);
 
-13) BigInt& operator<< (unsigned int n); -> Left shift by n. This is tantamount to multiplying this by 10^n.
+13) BigInt operator%(const BigInt& b);
 
-14) BigInt& operator>> (unsigned int n); -> Right shift by n. This is tantamount to dividing this by 10^n.
+14) BigInt& operator%=(const BigInt& b);
+
+15) long long operator%(long long b);
+
+16) BigInt& operator%=(long long b);
+
+17) BigInt operator<< (unsigned int n); -> Bit wise left-shift by n. This is tantamount to multiplying this by 2^n.
+
+18) BigInt operator>> (unsigned int n); -> Bit wise right-shift by n. This is tantamount to dividing this by 2^n.
+
+19) BigInt& operator<<= (unsigned int n);
+
+20) BigInt& operator>>= (unsigned int n);
+
+21) BigInt& left_shift (unsigned int); -> Decimal left-shift by n. This is tantamount to multiplying this by 10^n.
+
+22) BigInt& right_shift (unsigned int n); Decimal right-shift by n. This is tantamount to dividing this by 10^n.
 
 ---------------------------Non-member Math operators----------------------------
 For the functions below, T must be an integer or floating point type.
