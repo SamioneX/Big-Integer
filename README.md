@@ -72,6 +72,7 @@ The division operators throw a divisionByZero exception if the divisor is less t
 22) BigInt& right_shift (unsigned int n); Decimal right-shift by n. This is tantamount to dividing this by 10^n.
 
 ---------------------------Non-member Math operators----------------------------
+
 For the functions below, T must be an integer or floating point type.
 
 1) template<typename T> T& operator+= (T& t, const BigInt& b);
