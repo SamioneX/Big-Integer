@@ -143,7 +143,7 @@ Non-member relational operators:
 
 2) BigInt abs(const BigInt& b); ->get absolute value
 
-3) BigInt pow(const BigInt& b, unsigned int y); -> pow function.
+3) BigInt pow(BigInt x, unsigned int y); -> pow function.
 
 4) std::string to_string(const BigInt& b);
 
