@@ -1,12 +1,12 @@
 # Big-Integer
-A signed class of integers to store integers of unlimited length.
+A signed integer class to store integers of unlimited length.
 
 ----------------------------Constructors-----------------------------
 1) BigInt(); -> Default Constructor : Initializes value to zero
 
-2) BigInt(T n, int length); -> Construct from an integer type T. The length variable specifies the length of the number.
+2) BigInt(unsigned short n, int length); -> Fill constructor. n must be > 0 && < 10.
 
-3) BigInt(T n); -> This constructor determines the length of the number first before constructing it.
+3) BigInt(T n); -> Construct from an integral type, T.
 
 4) BigInt(long double n); -> Constructs from a floating point number.
 
@@ -33,7 +33,7 @@ Note: If a primitive type is passed as parameter to a function below without a p
 
 4) BigInt operator- (const BigInt& b); ->subtract
 
-5) BigInt operator-(); ->negate
+5) BigInt operator-(); -> get the negetive value of the number
 
 6) BigInt& operator*= (const BigInt& b);
 
@@ -69,6 +69,8 @@ The division operators throw a divisionByZero exception if the divisor is less t
 
 21) BigInt& operator>>= (unsigned int n);
 
+22) BigInt& negate(); ->change the sign.
+
 22) BigInt& left_shift (unsigned int); -> Decimal left-shift by n. This is tantamount to multiplying this by 10^n.
 
 23) BigInt& right_shift (unsigned int n); -> Decimal right-shift by n. This is tantamount to dividing this by 10^n.
@@ -92,6 +94,10 @@ For the functions below, T must be an integer or floating point type.
 3) template<typename T> T& operator-= (T& t, const BigInt& b);
 
 4) template<typename T> T operator- (T t, const BigInt& b);
+  
+5) template<typename T> T& operator%= (T& t, const BigInt& b);
+
+6) template<typename T> T operator% (T t, const BigInt& b);
   
 ----------------------------Conversion Operators-----------------------
 1) template<typename T> explicit operator T() const;  -> T must be an integer or floating point type.
@@ -124,15 +130,25 @@ Non-member relational operators:
 
 3) void shrink_to_fit();
 
+4) void to_bits(Collection<T, A>& c); ->stores the bit representation of the number in c. c must have a push_back function and its value_type T must be an integral type.
+
+5) std::sting to_bit_string(); -> same as above but stores the bits in a string.
+
+6) short operator[] (unsigned int i); -> read only.
+
+7) std::string to_words(); -> get a string of words representing the number. It returns "undefined" for length > 64.
+
 -------------------------------Other Non-member Functions---------------------
 1) swap(BigInt& a, BigInt& b);
 
 2) BigInt abs(const BigInt& b); ->get absolute value
 
-2) std::string to_string(const BigInt& b);
+3) BigInt pow(const BigInt& b, unsigned int y); -> pow function.
 
-3) std::ostream& operator<<(std::ostream& os, const BigInt& b);
+4) std::string to_string(const BigInt& b);
 
-4) std::istream& operator>>(std::istream& os, BigInt& b);
+5) std::ostream& operator<<(std::ostream& os, const BigInt& b);
 
-5) BigInt factorial(unsigned int);
+6) std::istream& operator>>(std::istream& os, BigInt& b);
+
+7) BigInt factorial(unsigned int);
