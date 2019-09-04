@@ -43,7 +43,7 @@ Note: If a primitive type is passed as parameter to a function below without a p
 
 9) BigInt operator* (long  multiplier);
 
-The division operators throw a divisionByZero exception if the divisor is less than the dividend.
+The division operators throw a divisionByZero exception if the divisor is sero.
 
 10) BigInt& operator/= (const BigInt& b);
 
