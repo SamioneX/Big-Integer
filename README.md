@@ -77,7 +77,7 @@ The division operators throw a divisionByZero exception if the divisor is zero.
 
 ---------------------------Non-member Math operators----------------------------
 
-For the functions below, T must be an integer or floating point type.
+For the functions below, T must be an integral or floating point type.
 
 1) template<typename T> T& operator+= (T& t, const BigInt& b);
 
@@ -100,7 +100,7 @@ For the functions below, T must be an integer or floating point type.
 6) template<typename T> T operator% (T t, const BigInt& b);
   
 ----------------------------Conversion Operators-----------------------
-1) template<typename T> explicit operator T() const;  -> T must be an integer or floating point type.
+1) template<typename T> explicit operator T() const;  -> T must be an integral or floating point type.
   
 2) template<bool> explicit operator bool() const; -> template specialization. Return true if number > 0.
   
@@ -130,11 +130,11 @@ Non-member relational operators:
 
 3) void shrink_to_fit();
 
-4) void to_bits(Collection<T, A>& c); ->stores the bit representation of the number in c. c must have a push_back function and its value_type T must be an integral type.
+4) template<typename Collection<T, A> > void to_bits(Collection<T, A>& C); ->stores the bit representation of the number in C (vector/deque recommended). C must have a push_back function and its value_type T must be an integral type.
 
 5) std::sting to_bit_string(); -> same as above but stores the bits in a string.
 
-6) short operator[] (unsigned int i); -> read only.
+6) short& operator[] (unsigned int i); Access each digit in the number.
 
 7) std::string to_words(); -> get a string of words representing the number. It returns "undefined" for length > 64.
 
@@ -143,7 +143,7 @@ Non-member relational operators:
 
 2) BigInt abs(const BigInt& b); ->get absolute value
 
-3) BigInt pow(BigInt x, unsigned int y); -> pow function.
+3) BigInt pow(BigInt x, unsigned int y); -> power function.
 
 4) std::string to_string(const BigInt& b);
 
