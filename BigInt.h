@@ -1,3 +1,8 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Big Integer Class                                       *
+ * Copyright 2019, Samuel Okechukwu. All rights reserved.  *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #ifndef BIGINT_H
 #define BIGINT_H
 
