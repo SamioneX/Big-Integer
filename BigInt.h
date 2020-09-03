@@ -270,7 +270,7 @@ namespace my {
                     result.arr[0] = q;
                 }
                 else {
-                    s_type a[inUse];
+                    auto a = new s_type[inUse];
                     int i = inUse-1, j = 0;
                     long long temp = arr[i];
                     while (temp < divisor)
@@ -292,6 +292,7 @@ namespace my {
                             result.arr[result.inUse++] = a[j];
                         result.isNeg = neg;
                     }
+                    delete [] a;
                 }
             }
             if (move) this->move(std::forward<BigInt&&>(result));
